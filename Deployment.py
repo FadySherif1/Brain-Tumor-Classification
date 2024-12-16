@@ -1,9 +1,6 @@
 import streamlit as st
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import classification_report, confusion_matrix
-import seaborn as sns
-import matplotlib.pyplot as plt
 from PIL import Image
 
 # Load the trained model
@@ -13,59 +10,41 @@ model = tf.keras.models.load_model('brain_tumor_model.h5')
 class_labels = ['Glioma Tumor', 'Meningioma Tumor', 'No Tumor', 'Pituitary Tumor']
 
 # Streamlit app
-st.title("Brain Tumor Detection with CNN")
-st.write("Upload MRI images to generate predictions and analyze model performance!")
+st.title("🧠Brain Tumor Detection with CNN")
+st.markdown("Upload an MRI image, and the model will predict the type of tumor. Let's detect early and save lives! 🙌")
 
-# Upload multiple files for testing (Test dataset)
-uploaded_files = st.file_uploader("Upload Multiple MRI Images for Testing", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
+# File uploader
+uploaded_file = st.file_uploader("📤 Upload an MRI Image (JPG/PNG)", type=["jpg", "png", "jpeg"])
 
-# Initialize lists to store true labels and predictions
-true_labels = []
-predicted_labels = []
+# If an image is uploaded
+if uploaded_file is not None:
+    # Display uploaded image
+    image = Image.open(uploaded_file)
+    st.image(image, caption='📸 Uploaded Image', use_container_width=True)
 
-if uploaded_files:
-    st.write("### Uploaded Images:")
-    for uploaded_file in uploaded_files:
-        # Display uploaded images
-        image = Image.open(uploaded_file)
-        st.image(image, caption=uploaded_file.name, use_container_width=True)
-
+    # Add a button for prediction
+    if st.button("Analyze"):
         # Preprocess the image
-        image = image.resize((150, 150))  # Resize to model input size
-        image = np.array(image) / 255.0  # Normalize
+        image = image.resize((150, 150))  # Resize to model's input size
+        image = np.array(image) / 255.0  # Normalize the image
         image = np.expand_dims(image, axis=0)  # Add batch dimension
 
-        # Predict the class
+        # Make predictions
         predictions = model.predict(image)
         predicted_class = class_labels[np.argmax(predictions)]
-        predicted_labels.append(np.argmax(predictions))
+        confidence_scores = predictions[0]
 
-        # Get the true label from the filename (assuming filenames contain labels)
-        # Example: 'glioma_1.jpg' -> glioma
-        for label in class_labels:
-            if label.lower() in uploaded_file.name.lower():
-                true_labels.append(class_labels.index(label))
-                break
+        # Display results
+        st.markdown("### 🎯 Prediction Results")
+        if predicted_class == "No Tumor":
+            st.success(f"🟢 **Predicted Class**: {predicted_class}")
+        else:
+            st.error(f"🔴 **Predicted Class**: {predicted_class}")
+        
+        # Display confidence scores
+        st.markdown("### 🔍 Confidence Scores")
+        for label, score in zip(class_labels, confidence_scores):
+            st.write(f"- {label}: {score:.2%}")
 
-    # Ensure predictions and true labels are the same length
-    if len(true_labels) == len(predicted_labels):
-        # Display classification report
-        st.write("### Classification Report:")
-        report = classification_report(true_labels, predicted_labels, target_names=class_labels, output_dict=True)
-        st.write(report)  # Display the report in Streamlit
-
-        # Display confusion matrix
-        st.write("### Confusion Matrix:")
-        conf_matrix = confusion_matrix(true_labels, predicted_labels)
-
-        # Plot confusion matrix
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=class_labels, yticklabels=class_labels)
-        plt.xlabel('Predicted Labels')
-        plt.ylabel('True Labels')
-        plt.title('Confusion Matrix')
-        st.pyplot(plt)
-    else:
-        st.error("Unable to determine true labels for some images. Check file naming conventions.")
-else:
-    st.info("Upload multiple test images to evaluate model performance.")
+        st.markdown("---")  # Divider for clarity
+        st.markdown("### 🧠 **Take Care of Your Brain Health** ❤️")
