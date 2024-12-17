@@ -4,7 +4,7 @@ import tensorflow as tf
 from PIL import Image
 
 # Load the trained model
-model = tf.keras.models.load_model('brain_tumor_model.h5')
+model = tf.keras.models.load_model('brain_tumor_modelCNN_98%.h5')
 
 # Define the class labels
 class_labels = ['Glioma Tumor', 'Meningioma Tumor', 'No Tumor', 'Pituitary Tumor']
